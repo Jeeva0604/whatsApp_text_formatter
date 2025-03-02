@@ -15,7 +15,21 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(title: const Text('WhatsApp Text Formatter')),
         body: const Center(
           child: WhatsAppTextFormatter(
-            text: "**Bold** *Italic* ~~Strikethrough~~ {#ff0000}Red Text",
+            text: """
+**Bold**  
+_Italic_  
+~~Strikethrough~~  
+```Monospace```  
+`Inline Code`  
+* Bullet Point  
+- Another Bullet Point
+1. Numbered List  
+> Quoted Text  
+""",
+            style: TextStyle(
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.start,
           ),
         ),
       ),

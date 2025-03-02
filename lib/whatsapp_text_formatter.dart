@@ -9,12 +9,14 @@ class WhatsAppTextFormatter extends StatelessWidget {
   /// Creates a WhatsAppTextFormatter widget.
   ///
   /// This widget supports:
-  /// - **Bold** (`**text**` or `__text__`)
-  /// - *Italic* (`*text*`)
+  /// - *Italic* (`_text_`)
+  /// - **Bold** (`**text**`)
   /// - ~~Strikethrough~~ (`~~text~~`)
   /// - `Monospace` (`` `text` ``)
-  /// - Underline (`__text__`)
-  /// - Custom Colors (`{#RRGGBB}text`)
+  /// - Bulleted List (`* text` or `- text`)
+  /// - Numbered List (`1. text`)
+  /// - Quote (`> text`)
+  /// - Inline Code (` `text` `)
   const WhatsAppTextFormatter({
     super.key,
     required this.text,
@@ -22,126 +24,111 @@ class WhatsAppTextFormatter extends StatelessWidget {
     this.textAlign = TextAlign.start,
   });
 
-  static final config = _Config();
-
   @override
   Widget build(BuildContext context) {
+    TextStyle defaultStyle =
+        (style ?? DefaultTextStyle.of(context).style).copyWith(
+      color: style?.color ??
+          Colors.black, // Default to black if no color is provided
+    );
+
     return RichText(
       textAlign: textAlign,
       text: TextSpan(
-        style: _applyDefaultStyle(style ?? DefaultTextStyle.of(context).style),
-        children: _parseMarkdown(text),
+        style: defaultStyle,
+        children: _parseWhatsAppFormat(text, defaultStyle),
       ),
     );
   }
 
-  /// Applies default style settings
-  TextStyle _applyDefaultStyle(TextStyle style) {
-    return style.copyWith(
-      fontWeight: null, // Removes fontWeight restrictions
-      color: style.color ?? Colors.black,
-      fontSize: style.fontSize ?? 16,
-    );
-  }
-
-  /// Parses WhatsApp-style formatting syntax
-  List<TextSpan> _parseMarkdown(String text) {
+  List<TextSpan> _parseWhatsAppFormat(String text, TextStyle defaultStyle) {
     final RegExp exp = RegExp(
-        r"(\*\*(.*?)\*\*|\*(.*?)\*|~~(.*?)~~|`(.*?)`|__(.*?)__|\\n|\{#([a-fA-F0-9]{6})\}(.*?))",
-        multiLine: true);
+      r"(\*\*(.*?)\*\*|_(.*?)_|~~(.*?)~~|```(.*?)```|`(.*?)`|^(\*|\-) (.*?)$|^(\d+)\. (.*?)$|^> (.*?)$)",
+      multiLine: true,
+    );
 
     List<TextSpan> spans = [];
     int lastMatchEnd = 0;
 
     for (var match in exp.allMatches(text)) {
       if (match.start > lastMatchEnd) {
-        spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
+        spans.add(TextSpan(
+            text: text.substring(lastMatchEnd, match.start),
+            style: defaultStyle));
       }
 
-      String? italicBold = match.group(2);
-      String? bold = match.group(3);
+      String? bold = match.group(2);
+      String? italic = match.group(3);
       String? strikethrough = match.group(4);
-      String? monospace = match.group(5);
-      String? underline = match.group(6);
-      bool isNewLine = match.group(0) == '\\n';
-      String? colorCode = match.group(7);
-      String? colorText = match.group(8);
+      String? monospaceBlock = match.group(5);
+      String? inlineCode = match.group(6);
+      String? bulletSymbol = match.group(7);
+      String? bulletText = match.group(8);
+      String? numberedIndex = match.group(9);
+      String? numberedText = match.group(10);
+      String? quoteText = match.group(11);
 
-      if (italicBold != null) {
-        spans.add(TextSpan(
-          text: italicBold,
-          style: _applyDefaultStyle(config.italicBoldStyle ??
-              const TextStyle(
-                  fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
-        ));
-      } else if (bold != null) {
+      if (bold != null) {
         spans.add(TextSpan(
           text: bold,
-          style: _applyDefaultStyle(
-              config.boldStyle ?? const TextStyle(fontWeight: FontWeight.bold)),
+          style:
+              defaultStyle.merge(const TextStyle(fontWeight: FontWeight.bold)),
+        ));
+      } else if (italic != null) {
+        spans.add(TextSpan(
+          text: italic,
+          style:
+              defaultStyle.merge(const TextStyle(fontStyle: FontStyle.italic)),
         ));
       } else if (strikethrough != null) {
         spans.add(TextSpan(
           text: strikethrough,
-          style: _applyDefaultStyle(config.strikethroughStyle ??
-              const TextStyle(decoration: TextDecoration.lineThrough)),
+          style: defaultStyle
+              .merge(const TextStyle(decoration: TextDecoration.lineThrough)),
         ));
-      } else if (monospace != null) {
+      } else if (monospaceBlock != null) {
         spans.add(TextSpan(
-          text: monospace,
-          style: _applyDefaultStyle(config.monospaceStyle ??
-              const TextStyle(fontFamily: 'monospace')),
+          text: monospaceBlock,
+          style: defaultStyle.merge(const TextStyle(fontFamily: 'monospace')),
         ));
-      } else if (underline != null) {
+      } else if (inlineCode != null) {
         spans.add(TextSpan(
-          text: underline,
-          style: _applyDefaultStyle(config.underlineStyle ??
-              const TextStyle(decoration: TextDecoration.underline)),
+          text: inlineCode,
+          style: defaultStyle.merge(const TextStyle(
+            fontFamily: 'monospace',
+            backgroundColor: Colors.grey,
+          )),
         ));
-      } else if (colorCode != null && colorText != null) {
+      } else if (bulletSymbol != null && bulletText != null) {
         spans.add(TextSpan(
-            text: colorText,
-            style: _applyDefaultStyle(
-                TextStyle(color: Color(int.parse("0xff$colorCode"))))));
-      } else if (isNewLine) {
-        spans.add(const TextSpan(text: '\n'));
+          text: '\n• $bulletText',
+          style:
+              defaultStyle.merge(const TextStyle(fontWeight: FontWeight.bold)),
+        ));
+      } else if (numberedIndex != null && numberedText != null) {
+        spans.add(TextSpan(
+          text: '\n$numberedIndex. $numberedText',
+          style:
+              defaultStyle.merge(const TextStyle(fontWeight: FontWeight.bold)),
+        ));
+      } else if (quoteText != null) {
+        spans.add(TextSpan(
+          text: '\n> $quoteText',
+          style: defaultStyle.merge(const TextStyle(
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          )),
+        ));
       }
 
       lastMatchEnd = match.end;
     }
 
     if (lastMatchEnd < text.length) {
-      spans.add(TextSpan(text: text.substring(lastMatchEnd)));
+      spans.add(
+          TextSpan(text: text.substring(lastMatchEnd), style: defaultStyle));
     }
 
     return spans;
-  }
-}
-
-class _Config {
-  TextStyle? boldStyle;
-  TextStyle? italicBoldStyle;
-  TextStyle? strikethroughStyle;
-  TextStyle? monospaceStyle;
-  TextStyle? underlineStyle;
-
-  void setBoldStyle(TextStyle style) {
-    boldStyle = style;
-  }
-
-  void setItalicBoldStyle(TextStyle style) {
-    italicBoldStyle = style;
-  }
-
-  void setStrikethroughStyle(TextStyle style) {
-    strikethroughStyle = style;
-  }
-
-  void setMonospaceStyle(TextStyle style) {
-    monospaceStyle = style;
-  }
-
-  void setUnderlineStyle(TextStyle style) {
-    underlineStyle = style;
   }
 }

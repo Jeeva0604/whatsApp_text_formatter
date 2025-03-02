@@ -1,6 +1,16 @@
 name: whatsapp_text_formatter
-description: "A Flutter package to format text like WhatsApp with bold, italic, strikethrough, underline, monospace, and custom colors."
-version: 1.0.0
+description: |
+  A Flutter package for WhatsApp-style text formatting. Supports:
+  - **Bold** (`**text**`)
+  - *Italic* (`_text_`)
+  - ~~Strikethrough~~ (`~~text~~`)
+  - `Monospace` (`` `text` ``)
+  - Bulleted Lists (`* text` or `- text`)
+  - Numbered Lists (`1. text`)
+  - Blockquotes (`> text`)
+  - Inline Code (` `text` `)
+
+version: 1.1.0
 repository: https://github.com/Jeeva0604/whatsApp_text_formatter
 homepage: https://github.com/Jeeva0604/whatsApp_text_formatter
 

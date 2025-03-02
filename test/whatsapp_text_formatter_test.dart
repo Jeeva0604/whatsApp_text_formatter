@@ -9,8 +9,17 @@ void main() {
     const testKey = Key('formatted_text');
 
     // Test text with WhatsApp-style formatting
-    const testText =
-        "**Bold** *Italic* ~~Strikethrough~~ `Monospace` {#ff0000}Red";
+    const testText = """
+**Bold**  
+_Italic_  
+~~Strikethrough~~  
+```Monospace```  
+`Inline Code`  
+* Bullet Point  
+- Another Bullet Point
+1. Numbered List  
+> Quoted Text  
+""";
 
     // Build the widget
     await tester.pumpWidget(
