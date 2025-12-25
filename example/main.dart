@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
         body: const Center(
           child: WhatsAppTextFormatter(
             text: """
-**Bold**  
+*Bold*  
 _Italic_  
 ~~Strikethrough~~  
 ```Monospace```  
